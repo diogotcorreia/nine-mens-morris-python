@@ -11,7 +11,9 @@ def cria_posicao(c, l):
     dicionario que corresponde ah representacao interna da posicao.
     R[c, l] = {'c': c, 'l': l}
     """
-    if type(c) != str or type(l) != str or c not in 'abc' or l not in '123':
+    if type(c) != str or type(l) != str or \
+            len(c) != 1 or c not in 'abc' or \
+            len(l) != 1 or l not in '123':
         raise ValueError("cria_posicao: argumentos invalidos")
     return {'c': c, 'l': l}
 
@@ -51,7 +53,9 @@ def eh_posicao(pos):
         'l' in pos and \
         type(pos['c']) == str and \
         type(pos['l']) == str and \
+        len(pos['c']) == 1 and \
         pos['c'] in 'abc' and \
+        len(pos['l']) == 1 and \
         pos['l'] in '123'
 
 
