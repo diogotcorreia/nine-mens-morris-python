@@ -41,3 +41,29 @@ def posicoes_iguais(p1, p2):
 
 def posicao_para_str(pos):
     return obter_pos_c(pos) + obter_pos_l(pos)
+
+
+def obter_posicoes_adjacentes(pos):
+    resultado = ()
+    c, l = obter_pos_c(pos), obter_pos_l(pos)
+    # obter acima e abaixo
+    if l != '1':
+        resultado += (cria_posicao(c, str(int(l) - 1)),)
+    if l != '3':
+        resultado += (cria_posicao(c, str(int(l) + 1)),)
+    # obter ah esquerda e direita
+    if c != 'a':
+        print(chr(ord(c) - 1))
+        resultado += (cria_posicao(chr(ord(c) - 1), l),)
+    if c != 'c':
+        resultado += (cria_posicao(chr(ord(c) + 1), l),)
+    # obter centro
+    if c in 'ac' and l in '13':  # if eh canto
+        resultado += (cria_posicao('b', '2'),)
+    # obter cantos
+    if c == 'b' and l == '2':
+        resultado += tuple(cria_posicao(col, lin)
+                           for col in 'ac' for lin in '13')
+
+    return tuple(sorted(resultado,
+                        key=lambda x: obter_pos_l(x) + obter_pos_c(x)))
