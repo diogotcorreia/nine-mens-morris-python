@@ -5,7 +5,7 @@
 ###############
 
 def cria_posicao(c, l):
-    if type(c) != str or type(l) != int or c not in 'abc' or not 1 <= l <= 3:
+    if type(c) != str or type(l) != str or c not in 'abc' or l not in '123':
         raise ValueError("cria_posicao: argumentos invalidos")
     return {'c': c, 'l': l}
 
@@ -26,10 +26,10 @@ def eh_posicao(pos):
     return type(pos) == dict and \
         'c' in pos and \
         'l' in pos and \
-        type(pos['c']) != str or \
-        type(pos['l']) != int or \
-        pos['c'] not in 'abc' or \
-        not 1 <= pos['l'] <= 3
+        type(pos['c']) == str and \
+        type(pos['l']) == str and \
+        pos['c'] in 'abc' and \
+        pos['l'] in '123'
 
 
 def posicoes_iguais(p1, p2):
