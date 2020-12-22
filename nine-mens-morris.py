@@ -183,6 +183,15 @@ def peca_para_inteiro(peca):
     """
     return {'[X]': 1, '[O]': -1, '[ ]': 0}[peca_para_str(peca)]
 
+
+def obter_peca_oponente(peca):
+    """
+    obter_peca_oponente: peca -> peca
+    Devolve a peca correspondente ao oponente da peca dada.
+    A peca vazia devolve uma peca vazia.
+    """
+    return cria_peca({0: ' ', 1: 'O', -1: 'X'}[peca_para_inteiro(peca)])
+
 #################
 # TAD Tabuleiro #
 #################
@@ -418,7 +427,7 @@ def obter_movimento_manual(tabuleiro, peca):
 def crit_vitoria(tabuleiro, peca):
     """
     crit_vitoria: tabuleiro X peca -> posicao
-    Verifica o criterio vitoria para a fase de colocacao.
+    Verifica o criterio vitoria ou bloqueio para a fase de colocacao.
     Retorna a posicao a jogar, ou None se o criterio nao se verificar.
     """
     for pos in obter_posicoes_livres(tabuleiro):
@@ -428,67 +437,55 @@ def crit_vitoria(tabuleiro, peca):
             return pos
 
 
-def crit_bloqueio(tabuleiro, peca):
+def crit_posicoes(tabuleiro, posicoes):
     """
-    crit_bloqueio: tabuleiro X peca -> posicao
-    Verifica o criterio bloqueio para a fase de colocacao.
-    Retorna a posicao a jogar, ou None se o criterio nao se verificar.
+    crit_posicoes: tabuleiro X tuplo de posicoes -> posicao
+    Devolve a primeira posicao, do tuplo de posicoes, que se encontra
+    livre no tabuleiro dado.
     """
-    if peca_para_inteiro(peca) == 1:
-        return crit_vitoria(tabuleiro, cria_peca('O'))
-    return crit_vitoria(tabuleiro, cria_peca('X'))
-
-
-def crit_centro(tabuleiro, peca):
-    """
-    crit_centro: tabuleiro X peca -> posicao
-    Verifica o criterio centro para a fase de colocacao.
-    Retorna a posicao a jogar, ou None se o criterio nao se verificar.
-    """
-    centro = cria_posicao('b', '2')
-    if pecas_iguais(cria_peca(' '), obter_peca(tabuleiro, centro)):
-        return centro
-
-
-def crit_canto(tabuleiro, peca):
-    """
-    crit_canto: tabuleiro X peca -> posicao
-    Verifica o criterio canto para a fase de colocacao.
-    Retorna a posicao a jogar, ou None se o criterio nao se verificar.
-    """
-    cantos = [cria_posicao(x[0], x[1]) for x in ('a1', 'c1', 'a3', 'c3')]
+    cantos = [cria_posicao(x[0], x[1]) for x in posicoes]
     livres = obter_posicoes_livres(tabuleiro)
     for canto in cantos:
         if posicao_em_lista(canto, livres):
             return canto
 
 
-def crit_lateral(tabuleiro, peca):
+def obter_movimento_facil(tabuleiro, peca):
     """
-    crit_lateral: tabuleiro X peca -> posicao
-    Verifica o criterio lateral para a fase de colocacao.
-    Retorna a posicao a jogar, ou None se o criterio nao se verificar.
+    obter_movimento_facil: tabuleiro X peca -> tuplo de posicoes
+    Recebe um tabuleiro e uma peca, e devolve um tuplo de duas posicoes
+    correspondente ao movimento que o jogador deve efetuar na dificuldade facil
     """
-    cantos = [cria_posicao(x[0], x[1]) for x in ('b1', 'a2', 'c2', 'b3')]
-    livres = obter_posicoes_livres(tabuleiro)
-    for canto in cantos:
-        if posicao_em_lista(canto, livres):
-            return canto
+    for pos in obter_posicoes_jogador(tabuleiro, peca):
+        for pos_adj in obter_posicoes_adjacentes(pos):
+            if pecas_iguais(cria_peca(' '), obter_peca(tabuleiro, pos_adj)):
+                return (pos, pos_adj)
+    return (obter_posicoes_jogador(tabuleiro, peca)[0], ) * 2
 
 
 def obter_movimento_auto(tabuleiro, peca, dificuldade):
     """
     obter_movimento_auto: tabuleiro X peca X str -> tuplo de posicoes
-    Recebe um tabuleiro, uma pela e a dificuldade do jogo, e devolve um tuplo
+    Recebe um tabuleiro, uma peca e a dificuldade do jogo, e devolve um tuplo
     com uma ou duas posicoes, que representam uma posicao ou movimento
     escolhido automaticamente.
     """
 
     eh_movimento = len(obter_posicoes_livres(tabuleiro)) <= 3
     if not eh_movimento:
-        criterios = (crit_vitoria, crit_bloqueio,
-                     crit_centro, crit_canto, crit_lateral)
+        criterios = (
+            lambda: crit_vitoria(tabuleiro, peca),
+            lambda: crit_vitoria(tabuleiro, obter_peca_oponente(peca)),
+            lambda: crit_posicoes(tabuleiro, ('b2', )),
+            lambda: crit_posicoes(tabuleiro, ('a1', 'c1', 'a3', 'c3')),
+            lambda: crit_posicoes(tabuleiro, ('b1', 'a2', 'c2', 'b3'))
+        )
         for criterio in criterios:
-            pos = criterio(tabuleiro)
+            pos = criterio()
             if pos:
                 return (pos, )
+
+    if dificuldade == 'facil':
+        return obter_movimento_facil(tabuleiro, peca)
+
+    # TODO minmax
