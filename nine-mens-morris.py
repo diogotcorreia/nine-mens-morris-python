@@ -109,6 +109,15 @@ def obter_posicoes_adjacentes(pos):
     return tuple(sorted(resultado,
                         key=lambda x: obter_pos_l(x) + obter_pos_c(x)))
 
+
+def posicao_em_lista(pos, l):
+    """
+    posicao_em_lista: posicao X iteravel -> booleano
+    Devolve True se a posicao estiver no iteravel dado.
+    Devolve False em caso contrário.
+    """
+    return any(posicoes_iguais(pos, x) for x in l)
+
 ############
 # TAD Peca #
 ############
@@ -369,3 +378,117 @@ def obter_posicoes_jogador(tabuleiro, peca):
     return tuple(pos
                  for pos in todas_pos
                  if pecas_iguais(peca, obter_peca(tabuleiro, pos)))
+
+######################
+# Funcoes adicionais #
+######################
+
+
+def obter_movimento_manual(tabuleiro, peca):
+    """
+    obter_movimento_manual: tabuleiro X peca -> tuplo de posicoes
+    Recebe um tabuleiro e uma peca de jogador, devolve um tuplo com
+    uma ou duas posicoes, que representam uma posicao ou um movimento,
+    introduzido pelo jogador.
+    """
+    eh_movimento = len(obter_posicoes_livres(tabuleiro)) <= 3
+
+    if eh_movimento:
+        mov = input("Turno do jogador. Escolha um movimento: ")
+        if len(mov) == 4:
+            pos_de, pos_para = cria_posicao(mov[0], mov[1]), \
+                cria_posicao(mov[2], mov[3])
+            if pecas_iguais(peca, obter_peca(tabuleiro, pos_de)) and \
+                (posicoes_iguais(pos_de, pos_para) or
+                 (pecas_iguais(cria_peca(' '),
+                               obter_peca(tabuleiro, pos_para)) and
+                    posicao_em_lista(pos_para,
+                                     obter_posicoes_adjacentes(pos_de)))):
+                return (pos_de, pos_para)
+    else:
+        pos = input("Turno do jogador. Escolha uma posicao: ")
+        if len(pos) == 2:
+            pos = cria_posicao(pos[0], pos[1])
+            if pecas_iguais(cria_peca(' '), obter_peca(tabuleiro, pos)):
+                return (pos, )
+
+    raise ValueError("obter_movimento_manual: escolha invalida")
+
+
+def crit_vitoria(tabuleiro, peca):
+    """
+    crit_vitoria: tabuleiro X peca -> posicao
+    Verifica o criterio vitoria para a fase de colocacao.
+    Retorna a posicao a jogar, ou None se o criterio nao se verificar.
+    """
+    for pos in obter_posicoes_livres(tabuleiro):
+        copia_tab = cria_copia_tabuleiro(tabuleiro)
+        ganhador = obter_ganhador(coloca_peca(copia_tab, peca, pos))
+        if pecas_iguais(peca, ganhador):
+            return pos
+
+
+def crit_bloqueio(tabuleiro, peca):
+    """
+    crit_bloqueio: tabuleiro X peca -> posicao
+    Verifica o criterio bloqueio para a fase de colocacao.
+    Retorna a posicao a jogar, ou None se o criterio nao se verificar.
+    """
+    if peca_para_inteiro(peca) == 1:
+        return crit_vitoria(tabuleiro, cria_peca('O'))
+    return crit_vitoria(tabuleiro, cria_peca('X'))
+
+
+def crit_centro(tabuleiro, peca):
+    """
+    crit_centro: tabuleiro X peca -> posicao
+    Verifica o criterio centro para a fase de colocacao.
+    Retorna a posicao a jogar, ou None se o criterio nao se verificar.
+    """
+    centro = cria_posicao('b', '2')
+    if pecas_iguais(cria_peca(' '), obter_peca(tabuleiro, centro)):
+        return centro
+
+
+def crit_canto(tabuleiro, peca):
+    """
+    crit_canto: tabuleiro X peca -> posicao
+    Verifica o criterio canto para a fase de colocacao.
+    Retorna a posicao a jogar, ou None se o criterio nao se verificar.
+    """
+    cantos = [cria_posicao(x[0], x[1]) for x in ('a1', 'c1', 'a3', 'c3')]
+    livres = obter_posicoes_livres(tabuleiro)
+    for canto in cantos:
+        if posicao_em_lista(canto, livres):
+            return canto
+
+
+def crit_lateral(tabuleiro, peca):
+    """
+    crit_lateral: tabuleiro X peca -> posicao
+    Verifica o criterio lateral para a fase de colocacao.
+    Retorna a posicao a jogar, ou None se o criterio nao se verificar.
+    """
+    cantos = [cria_posicao(x[0], x[1]) for x in ('b1', 'a2', 'c2', 'b3')]
+    livres = obter_posicoes_livres(tabuleiro)
+    for canto in cantos:
+        if posicao_em_lista(canto, livres):
+            return canto
+
+
+def obter_movimento_auto(tabuleiro, peca, dificuldade):
+    """
+    obter_movimento_auto: tabuleiro X peca X str -> tuplo de posicoes
+    Recebe um tabuleiro, uma pela e a dificuldade do jogo, e devolve um tuplo
+    com uma ou duas posicoes, que representam uma posicao ou movimento
+    escolhido automaticamente.
+    """
+
+    eh_movimento = len(obter_posicoes_livres(tabuleiro)) <= 3
+    if not eh_movimento:
+        criterios = (crit_vitoria, crit_bloqueio,
+                     crit_centro, crit_canto, crit_lateral)
+        for criterio in criterios:
+            pos = criterio(tabuleiro)
+            if pos:
+                return (pos, )
