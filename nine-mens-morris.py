@@ -347,7 +347,7 @@ def obter_ganhador(tabuleiro):
                 pecas_iguais(vetor[1], vetor[2]) and \
                 not pecas_iguais(vetor[0], cria_peca(' ')):
             return vetor[0]
-    return False
+    return cria_peca(' ')
 
 
 def obter_posicoes_livres(tabuleiro):
