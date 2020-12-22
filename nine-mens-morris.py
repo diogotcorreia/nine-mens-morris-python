@@ -95,7 +95,6 @@ def obter_posicoes_adjacentes(pos):
         resultado += (cria_posicao(c, str(int(l) + 1)),)
     # obter ah esquerda e direita
     if c != 'a':
-        print(chr(ord(c) - 1))
         resultado += (cria_posicao(chr(ord(c) - 1), l),)
     if c != 'c':
         resultado += (cria_posicao(chr(ord(c) + 1), l),)
@@ -174,3 +173,199 @@ def peca_para_inteiro(peca):
     Devolve um inteiro -1, 1 ou 0, de acordo com o jogador dono da peca.
     """
     return {'[X]': 1, '[O]': -1, '[ ]': 0}[peca_para_str(peca)]
+
+#################
+# TAD Tabuleiro #
+#################
+
+
+def cria_tabuleiro():
+    """
+    cria_tabuleiro: {} -> tabuleiro
+    Devolve um tabuleiro de jogo do moinho de 3x3 posicoes vazio
+
+    """
+    return {}
+
+
+def cria_copia_tabuleiro(tabuleiro):
+    """
+    cria_copia_tabuleiro: tabuleiro -> tabuleiro
+    Recebe um tabuleiro e devolve uma copia nova do tabuleiro
+    """
+    res = {}
+    for pos in tabuleiro:
+        res[pos] = cria_copia_peca(tabuleiro[pos])
+    return res
+
+
+def obter_peca(tabuleiro, pos):
+    """
+    obter_peca: tabuleiro X posicao -> peca
+    Devolve a peca na posicao dada do tabuleiro.
+    Se a posicao nao estiver ocupada, devolve uma peca livre
+    """
+    pos_str = posicao_para_str(pos)
+    if pos_str not in tabuleiro:
+        return cria_peca(' ')
+    return tabuleiro[pos_str]
+
+
+def obter_vetor(tabuleiro, s):
+    """
+    obter_vetor: tabuleiro X str -> tuplo de pecas
+    Devolve todas as pecas da linha ou coluna especificada
+    pelo seu argumento.
+    """
+    if s in 'abc':
+        return tuple(obter_peca(tabuleiro, cria_posicao(s, l)) for l in '123')
+    return tuple(obter_peca(tabuleiro, cria_posicao(c, s)) for c in 'abc')
+
+
+def coloca_peca(tabuleiro, peca, pos):
+    """
+    coloca_peca: tabuleiro X peca X posicao -> tabuleiro
+    Modifica destrutivamente o tabuleiro,
+    colocando a peca dada na posicao dada.
+    Devolve o proprio tabuleiro.
+    """
+    tabuleiro[posicao_para_str(pos)] = peca
+    return tabuleiro
+
+
+def remove_peca(tabuleiro, pos):
+    """
+    remove_peca: tabuleiro X posicao -> tabuleiro
+    Modifica destrutivamente o tabuleiro, removendo a peca da posicao dada.
+    Devolve o proprio tabuleiro.
+    """
+    del tabuleiro[posicao_para_str(pos)]
+    return tabuleiro
+
+
+def move_peca(tabuleiro, pos1, pos2):
+    """
+    move_peca: tabuleiro X posicao X posicao -> tabuleiro
+    Modifica destrutivamente o tabuleiro, movendo a peca que se encontra
+    na posicao 1 para a posicao 2.
+    Devolve o proprio tabuleiro.
+    """
+    peca = obter_peca(tabuleiro, pos1)
+    return remove_peca(coloca_peca(tabuleiro, peca, pos2), pos1)
+
+
+def eh_tabuleiro(arg):
+    """
+    eh_tabuleiro: universal -> booleano
+    Devolve True caso o seu argumento seja um TAD tabuleiro valido.
+    Devolve False em caso contrario.
+    """
+    todas_pos = [c + l for c in 'abc' for l in '123']
+    if type(arg) != dict or \
+            len(arg) > 9 or \
+            not all(map(lambda x: x in todas_pos, arg)) or \
+            not all(map(lambda x: eh_peca(x), arg.values())):
+        return False
+
+    jogador1 = len(obter_posicoes_jogador(arg, cria_peca('X')))
+    jogador2 = len(obter_posicoes_jogador(arg, cria_peca('O')))
+    if jogador1 > 3 or jogador2 > 3 or abs(jogador1 - jogador2) > 1:
+        return False
+
+    ganhadores = set()
+    for seccao in 'abc123':
+        vetor = obter_vetor(arg, seccao)
+        if pecas_iguais(vetor[0], vetor[1]) and \
+                pecas_iguais(vetor[1], vetor[2]) and \
+                not pecas_iguais(vetor[0], cria_peca(' ')):
+            ganhadores.add(peca_para_inteiro(vetor[0]))
+    return len(ganhadores) <= 1
+
+
+def eh_posicao_livre(tabuleiro, pos):
+    """
+    eh_posicao_livre: tabuleiro X posicao -> booleano
+    Devolve True caso a posicao dada no tabuleiro corresponda a uma
+    peca livre.
+    Devolve False em caso contrario.
+    """
+    return pecas_iguais(cria_peca(' '), obter_peca(tabuleiro, pos))
+
+
+def tabuleiros_iguais(tabuleiro1, tabuleiro2):
+    """
+    tabuleiros_iguais: tabuleiro X tabuleiro -> booleano
+    Devolve True se ambos os tabuleiros dados sao iguais.
+    Devolve False em caso contrario.
+    """
+    todas_pos = [cria_posicao(c, l) for c in 'abc' for l in '123']
+    return eh_tabuleiro(tabuleiro1) and \
+        eh_tabuleiro(tabuleiro2) and \
+        all(map(lambda pos:
+                pecas_iguais(obter_peca(tabuleiro1, pos),
+                             obter_peca(tabuleiro2, pos)),
+                todas_pos))
+
+
+def tabuleiro_para_str(tabuleiro):
+    """
+    tabuleiro_para_str: tabuleiro -> str
+    Devolve a cadeira de caracteres que representa o tabuleiro.
+    """
+    todas_pos = [cria_posicao(c, l) for l in '123' for c in 'abc']
+    return ("   a   b   c\n1 {}-{}-{}" +
+            "\n   | \\ | / |\n2 {}-{}-{}" +
+            "\n   | / | \\ |\n3 {}-{}-{}").format(
+        *map(lambda x: peca_para_str(obter_peca(tabuleiro, x)), todas_pos)
+    )
+
+
+def tuplo_para_tabuleiro(t):
+    """
+    tuplo_para_tabuleiro: tuplo -> tabuleiro
+    Devolve o tabuleiro que eh representado pelo tuplo dado,
+    que por sim contem 3 tuplos, um para cada posicao.
+    """
+    todas_pos = [[cria_posicao(c, l) for c in 'abc'] for l in '123']
+    tab = cria_tabuleiro()
+    for i in range(3):
+        for j in range(3):
+            peca = {-1: 'O', 0: ' ', 1: 'X'}[t[i][j]]
+            coloca_peca(tab, cria_peca(peca), todas_pos[i][j])
+    return tab
+
+
+def obter_ganhador(tabuleiro):
+    """
+    obter_ganhador: tabuleiro -> peca
+    Devolve uma peca do jogador que tenha as suas 3 pecas
+    em tinha na vertical ou na horizontal no tabuleiro.
+    """
+    for seccao in 'abc123':
+        vetor = obter_vetor(tabuleiro, seccao)
+        if pecas_iguais(vetor[0], vetor[1]) and \
+                pecas_iguais(vetor[1], vetor[2]) and \
+                not pecas_iguais(vetor[0], cria_peca(' ')):
+            return vetor[0]
+    return False
+
+
+def obter_posicoes_livres(tabuleiro):
+    """
+    obter_posicoes_livres: tabuleiro -> tuplo de posicoes
+    Devolve um tuplo com as posicoes nao ocupadas pelas pecas de
+    qualquer um dos dois jogadores na ordem de leitura do tabuleiro.
+    """
+    return obter_posicoes_jogador(tabuleiro, cria_peca(' '))
+
+
+def obter_posicoes_jogador(tabuleiro, peca):
+    """
+    obter_posicoes_livres: tabuleiro X peca -> tuplo de posicoes
+    Devolve um tuplo com as posicoes ocupadas pelas pecas do jogador
+    dado na ordem de leitura do tabuleiro.
+    """
+    todas_pos = [cria_posicao(c, l) for l in '123' for c in 'abc']
+    return tuple(pos
+                 for pos in todas_pos
+                 if pecas_iguais(peca, obter_peca(tabuleiro, pos)))
