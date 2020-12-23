@@ -463,6 +463,36 @@ def obter_movimento_facil(tabuleiro, peca):
     return (obter_posicoes_jogador(tabuleiro, peca)[0], ) * 2
 
 
+def minimax(tabuleiro, jogador, profundidade, seq_movimentos):
+    """
+    minimax: tabuleiro X jogador X N X tuplo de tuplos de posicoes ->
+    tuplo de posicoes X tuplo de tuplo de posicoes
+    """
+    ganhador = obter_ganhador(tabuleiro)
+    if not pecas_iguais(cria_peca(' '), ganhador) or profundidade == 0:
+        return peca_para_inteiro(ganhador), seq_movimentos
+
+    melhor_res, melhor_seq_mov = -peca_para_inteiro(jogador), ()
+    posicoes_livres = obter_posicoes_livres(tabuleiro)
+    for pos in obter_posicoes_jogador(tabuleiro, jogador):
+        for pos_adj in obter_posicoes_adjacentes(pos):
+            if posicao_em_lista(pos_adj, posicoes_livres):
+                copia_tabuleiro = cria_copia_tabuleiro(tabuleiro)
+                move_peca(copia_tabuleiro, pos, pos_adj)
+                novo_res, nova_seq_mov = \
+                    minimax(copia_tabuleiro, obter_peca_oponente(jogador),
+                            profundidade - 1, seq_movimentos + (pos, pos_adj))
+                peca_int = peca_para_inteiro(jogador)
+                if melhor_seq_mov == () or \
+                    (peca_int == 1 and novo_res > melhor_res) or \
+                        (peca_int == -1 and novo_res < melhor_res):
+                    melhor_res, melhor_seq_mov = \
+                        novo_res, nova_seq_mov
+    if melhor_seq_mov == ():
+        melhor_seq_mov = (obter_posicoes_jogador(tabuleiro, jogador)[0], ) * 2
+    return melhor_res, melhor_seq_mov
+
+
 def obter_movimento_auto(tabuleiro, peca, dificuldade):
     """
     obter_movimento_auto: tabuleiro X peca X str -> tuplo de posicoes
@@ -488,4 +518,8 @@ def obter_movimento_auto(tabuleiro, peca, dificuldade):
     if dificuldade == 'facil':
         return obter_movimento_facil(tabuleiro, peca)
 
-    # TODO minmax
+    if dificuldade == 'normal':
+        return minimax(tabuleiro, peca, 1, ())[1][:2]
+
+    if dificuldade == 'dificil':
+        return minimax(tabuleiro, peca, 5, ())[1][:2]
