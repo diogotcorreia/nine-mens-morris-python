@@ -114,7 +114,7 @@ def posicao_em_lista(pos, l):
     """
     posicao_em_lista: posicao X iteravel -> booleano
     Devolve True se a posicao estiver no iteravel dado.
-    Devolve False em caso contrário.
+    Devolve False em caso contrario.
     """
     return any(posicoes_iguais(pos, x) for x in l)
 
@@ -465,8 +465,10 @@ def obter_movimento_facil(tabuleiro, peca):
 
 def minimax(tabuleiro, jogador, profundidade, seq_movimentos):
     """
-    minimax: tabuleiro X jogador X N X tuplo de tuplos de posicoes ->
-    tuplo de posicoes X tuplo de tuplo de posicoes
+    minimax: tabuleiro X jogador X N X tuplo de posicoes ->
+        N X tuplo de posicoes
+    Calcula qual a jogada a tomar de acordo com o algoritmo minimax.
+    Devolve o melhor resultado (inteiro) e a melhor sequencia de movimentos.
     """
     ganhador = obter_ganhador(tabuleiro)
     if not pecas_iguais(cria_peca(' '), ganhador) or profundidade == 0:
@@ -523,3 +525,38 @@ def obter_movimento_auto(tabuleiro, peca, dificuldade):
 
     if dificuldade == 'dificil':
         return minimax(tabuleiro, peca, 5, ())[1][:2]
+
+
+def moinho(jogador, dificuldade):
+    """
+    moinho: str X str -> str
+    Recebe duas cadeias de caracteres, representando um jogador e uma
+    dificuldade, e devolve a representacao externa da peca ganhadora.
+    """
+    if type(jogador) != str or jogador not in ('[X]', '[O]') or \
+            type(dificuldade) != str or \
+            dificuldade not in ('facil', 'normal', 'dificil'):
+        raise ValueError('moinho: argumentos invalidos')
+
+    jogador = cria_peca(jogador[1])
+    tabuleiro = cria_tabuleiro()
+    print('Bem-vindo ao JOGO DO MOINHO. Nivel de dificuldade {}.'.format(
+        dificuldade))
+    print(tabuleiro_para_str(tabuleiro))
+    turno = cria_peca('X')
+    ganhador = cria_peca(' ')
+    while peca_para_inteiro(ganhador) == 0:
+        if pecas_iguais(turno, jogador):  # turno jogador
+            mov = obter_movimento_manual(tabuleiro, turno)
+        else:  # turno computador
+            print('Turno do computador ({}):'.format(dificuldade))
+            mov = obter_movimento_auto(tabuleiro, turno, dificuldade)
+        if len(mov) == 1:
+            coloca_peca(tabuleiro, turno, mov[0])
+        else:
+            move_peca(tabuleiro, mov[0], mov[1])
+        print(tabuleiro_para_str(tabuleiro))
+        turno = obter_peca_oponente(turno)
+        ganhador = obter_ganhador(tabuleiro)
+
+    return peca_para_str(ganhador)
