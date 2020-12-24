@@ -460,7 +460,7 @@ def obter_movimento_facil(tabuleiro, peca):
         for pos_adj in obter_posicoes_adjacentes(pos):
             if pecas_iguais(cria_peca(' '), obter_peca(tabuleiro, pos_adj)):
                 return (pos, pos_adj)
-    return (obter_posicoes_jogador(tabuleiro, peca)[0], ) * 2
+    return ()
 
 
 def minimax(tabuleiro, jogador, profundidade, seq_movimentos):
@@ -490,8 +490,6 @@ def minimax(tabuleiro, jogador, profundidade, seq_movimentos):
                         (peca_int == -1 and novo_res < melhor_res):
                     melhor_res, melhor_seq_mov = \
                         novo_res, nova_seq_mov
-    if melhor_seq_mov == ():
-        melhor_seq_mov = (obter_posicoes_jogador(tabuleiro, jogador)[0], ) * 2
     return melhor_res, melhor_seq_mov
 
 
@@ -518,13 +516,14 @@ def obter_movimento_auto(tabuleiro, peca, dificuldade):
                 return (pos, )
 
     if dificuldade == 'facil':
-        return obter_movimento_facil(tabuleiro, peca)
-
+        mov = obter_movimento_facil(tabuleiro, peca)
     if dificuldade == 'normal':
-        return minimax(tabuleiro, peca, 1, ())[1][:2]
-
+        mov = minimax(tabuleiro, peca, 1, ())[1][:2]
     if dificuldade == 'dificil':
-        return minimax(tabuleiro, peca, 5, ())[1][:2]
+        mov = minimax(tabuleiro, peca, 5, ())[1][:2]
+    if mov == ():
+        mov = (obter_posicoes_jogador(tabuleiro, peca)[0], ) * 2
+    return mov
 
 
 def moinho(jogador, dificuldade):
