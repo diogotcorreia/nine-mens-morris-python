@@ -118,6 +118,21 @@ def posicao_em_lista(pos, l):
     """
     return any(posicoes_iguais(pos, x) for x in l)
 
+
+def eh_pos_mov_str(s, mov):
+    """
+    eh_pos_mov_str: str X booleano -> booleano
+    Devolve True se a cadeira de caracteres corresponder ah representacao
+    externa de uma posicao ou movimento, dependendo do valor do booleano,
+    em que True representa um movimento e False uma posicao.
+    """
+    if len(s) != (4 if mov else 2):
+        return False
+    for pos in [s[i:i + 2] for i in range(0, len(s), 2)]:
+        if pos[0] not in 'abc' or pos[1] not in '123':
+            return False
+    return True
+
 ############
 # TAD Peca #
 ############
@@ -393,6 +408,19 @@ def obter_posicoes_jogador(tabuleiro, peca):
 ######################
 
 
+def deve_passar(tabuleiro, peca):
+    """
+    deve_passar: tabuleiro X peca -> booleano
+    Devolve True se nao for possivel para o jogador dado movimentar nenhuma
+    das duas pecas. Devolve False em caso contrario.
+    """
+    for pos in obter_posicoes_jogador(tabuleiro, peca):
+        for pos_adj in obter_posicoes_adjacentes(pos):
+            if peca_para_inteiro(obter_peca(tabuleiro, pos_adj)) == 0:
+                return False
+    return True
+
+
 def obter_movimento_manual(tabuleiro, peca):
     """
     obter_movimento_manual: tabuleiro X peca -> tuplo de posicoes
@@ -401,24 +429,23 @@ def obter_movimento_manual(tabuleiro, peca):
     introduzido pelo jogador.
     """
     eh_movimento = len(obter_posicoes_livres(tabuleiro)) <= 3
+    mov = input("Turno do jogador. Escolha {}: ".format(
+        'um movimento' if eh_movimento else 'uma posicao'))
 
-    if eh_movimento:
-        mov = input("Turno do jogador. Escolha um movimento: ")
-        if len(mov) == 4:
+    if eh_pos_mov_str(mov, eh_movimento):
+        if eh_movimento:
             pos_de, pos_para = cria_posicao(mov[0], mov[1]), \
                 cria_posicao(mov[2], mov[3])
             if pecas_iguais(peca, obter_peca(tabuleiro, pos_de)) and \
-                (posicoes_iguais(pos_de, pos_para) or
-                 (pecas_iguais(cria_peca(' '),
-                               obter_peca(tabuleiro, pos_para)) and
+                ((deve_passar(tabuleiro, peca) and
+                  posicoes_iguais(pos_de, pos_para)) or
+                 (peca_para_inteiro(obter_peca(tabuleiro, pos_para)) == 0 and
                     posicao_em_lista(pos_para,
                                      obter_posicoes_adjacentes(pos_de)))):
                 return (pos_de, pos_para)
-    else:
-        pos = input("Turno do jogador. Escolha uma posicao: ")
-        if len(pos) == 2:
-            pos = cria_posicao(pos[0], pos[1])
-            if pecas_iguais(cria_peca(' '), obter_peca(tabuleiro, pos)):
+        else:
+            pos = cria_posicao(mov[0], mov[1])
+            if peca_para_inteiro(obter_peca(tabuleiro, pos)) == 0:
                 return (pos, )
 
     raise ValueError("obter_movimento_manual: escolha invalida")
