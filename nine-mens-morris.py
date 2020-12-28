@@ -49,6 +49,7 @@ def eh_posicao(pos):
     e False caso contrario.
     """
     return type(pos) == dict and \
+        len(pos) == 2 and \
         'c' in pos and \
         'l' in pos and \
         type(pos['c']) == str and \
@@ -88,24 +89,20 @@ def obter_posicoes_adjacentes(pos):
     """
     resultado = ()
     c, l = obter_pos_c(pos), obter_pos_l(pos)
-    # obter acima e abaixo
-    if l != '1':
+    if l != '1':  # obter acima e abaixo
         resultado += (cria_posicao(c, str(int(l) - 1)),)
     if l != '3':
         resultado += (cria_posicao(c, str(int(l) + 1)),)
-    # obter ah esquerda e direita
-    if c != 'a':
+    if c != 'a':  # obter ah esquerda e direita
         resultado += (cria_posicao(chr(ord(c) - 1), l),)
     if c != 'c':
         resultado += (cria_posicao(chr(ord(c) + 1), l),)
     # obter centro
     if c in 'ac' and l in '13':  # if eh canto
         resultado += (cria_posicao('b', '2'),)
-    # obter cantos
-    if c == 'b' and l == '2':
-        resultado += tuple(cria_posicao(col, lin)
-                           for col in 'ac' for lin in '13')
-
+    if c == 'b' and l == '2':  # obter cantos
+        resultado += \
+            tuple(cria_posicao(col, lin) for col in 'ac' for lin in '13')
     return tuple(sorted(resultado,
                         key=lambda x: obter_pos_l(x) + obter_pos_c(x)))
 
@@ -207,6 +204,14 @@ def obter_peca_oponente(peca):
     """
     return cria_peca({0: ' ', 1: 'O', -1: 'X'}[peca_para_inteiro(peca)])
 
+
+def obter_todas_posicoes():
+    """
+    obter_todas_posicoes: void -> tuplo de posicoes
+    Devolve um tuplo com todas as posicoes, ordenadas, possiveis de um tabuleiro
+    """
+    return tuple(cria_posicao(c, l) for l in '123' for c in 'abc')
+
 #################
 # TAD Tabuleiro #
 #################
@@ -216,7 +221,7 @@ def cria_tabuleiro():
     """
     cria_tabuleiro: {} -> tabuleiro
     Devolve um tabuleiro de jogo do moinho de 3x3 posicoes vazio
-
+    R[posicao: peca] = {posicao_str: peca}
     """
     return {}
 
@@ -226,10 +231,7 @@ def cria_copia_tabuleiro(tabuleiro):
     cria_copia_tabuleiro: tabuleiro -> tabuleiro
     Recebe um tabuleiro e devolve uma copia nova do tabuleiro
     """
-    res = {}
-    for pos in tabuleiro:
-        res[pos] = cria_copia_peca(tabuleiro[pos])
-    return res
+    return {pos: cria_copia_peca(peca) for (pos, peca) in tabuleiro.items()}
 
 
 def obter_peca(tabuleiro, pos):
@@ -293,9 +295,8 @@ def eh_tabuleiro(arg):
     Devolve True caso o seu argumento seja um TAD tabuleiro valido.
     Devolve False em caso contrario.
     """
-    todas_pos = [c + l for c in 'abc' for l in '123']
-    if type(arg) != dict or \
-            len(arg) > 9 or \
+    todas_pos = tuple(posicao_para_str(pos) for pos in obter_todas_posicoes())
+    if type(arg) != dict or len(arg) > 9 or \
             not all(map(lambda x: x in todas_pos, arg)) or \
             not all(map(lambda x: eh_peca(x), arg.values())):
         return False
@@ -331,13 +332,12 @@ def tabuleiros_iguais(tabuleiro1, tabuleiro2):
     Devolve True se ambos os tabuleiros dados sao iguais.
     Devolve False em caso contrario.
     """
-    todas_pos = [cria_posicao(c, l) for c in 'abc' for l in '123']
     return eh_tabuleiro(tabuleiro1) and \
         eh_tabuleiro(tabuleiro2) and \
         all(map(lambda pos:
                 pecas_iguais(obter_peca(tabuleiro1, pos),
                              obter_peca(tabuleiro2, pos)),
-                todas_pos))
+                obter_todas_posicoes()))
 
 
 def tabuleiro_para_str(tabuleiro):
@@ -345,7 +345,7 @@ def tabuleiro_para_str(tabuleiro):
     tabuleiro_para_str: tabuleiro -> str
     Devolve a cadeira de caracteres que representa o tabuleiro.
     """
-    todas_pos = [cria_posicao(c, l) for l in '123' for c in 'abc']
+    todas_pos = obter_todas_posicoes()
     return ("   a   b   c\n1 {}-{}-{}" +
             "\n   | \\ | / |\n2 {}-{}-{}" +
             "\n   | / | \\ |\n3 {}-{}-{}").format(
@@ -359,12 +359,12 @@ def tuplo_para_tabuleiro(t):
     Devolve o tabuleiro que eh representado pelo tuplo dado,
     que por sim contem 3 tuplos, um para cada posicao.
     """
-    todas_pos = [[cria_posicao(c, l) for c in 'abc'] for l in '123']
+    todas_pos = obter_todas_posicoes()
     tab = cria_tabuleiro()
     for i in range(3):
         for j in range(3):
             peca = {-1: 'O', 0: ' ', 1: 'X'}[t[i][j]]
-            coloca_peca(tab, cria_peca(peca), todas_pos[i][j])
+            coloca_peca(tab, cria_peca(peca), todas_pos[i * 3 + j])
     return tab
 
 
