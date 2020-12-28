@@ -286,7 +286,7 @@ def move_peca(tabuleiro, pos1, pos2):
     Devolve o proprio tabuleiro.
     """
     peca = obter_peca(tabuleiro, pos1)
-    return remove_peca(coloca_peca(tabuleiro, peca, pos2), pos1)
+    return coloca_peca(remove_peca(tabuleiro, pos1), peca, pos2)
 
 
 def eh_tabuleiro(arg):
