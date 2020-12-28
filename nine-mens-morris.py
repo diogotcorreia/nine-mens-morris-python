@@ -514,9 +514,10 @@ def minimax(tabuleiro, jogador, profundidade, seq_movimentos):
                 peca_int = peca_para_inteiro(jogador)
                 if melhor_seq_mov == () or \
                     (peca_int == 1 and novo_res > melhor_res) or \
-                        (peca_int == -1 and novo_res < melhor_res):
-                    melhor_res, melhor_seq_mov = \
-                        novo_res, nova_seq_mov
+                    (peca_int == -1 and novo_res < melhor_res) or \
+                        (melhor_res == novo_res and
+                            len(nova_seq_mov) < len(melhor_seq_mov)):
+                    melhor_res, melhor_seq_mov = novo_res, nova_seq_mov
     return melhor_res, melhor_seq_mov
 
 
