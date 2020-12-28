@@ -130,6 +130,14 @@ def eh_pos_mov_str(s, mov):
             return False
     return True
 
+
+def obter_todas_posicoes():
+    """
+    obter_todas_posicoes: {} -> tuplo de posicoes
+    Devolve um tuplo com todas as posicoes, ordenadas, possiveis de um tabuleiro
+    """
+    return tuple(cria_posicao(c, l) for l in '123' for c in 'abc')
+
 ############
 # TAD Peca #
 ############
@@ -203,14 +211,6 @@ def obter_peca_oponente(peca):
     A peca vazia devolve uma peca vazia.
     """
     return cria_peca({0: ' ', 1: 'O', -1: 'X'}[peca_para_inteiro(peca)])
-
-
-def obter_todas_posicoes():
-    """
-    obter_todas_posicoes: void -> tuplo de posicoes
-    Devolve um tuplo com todas as posicoes, ordenadas, possiveis de um tabuleiro
-    """
-    return tuple(cria_posicao(c, l) for l in '123' for c in 'abc')
 
 #################
 # TAD Tabuleiro #
@@ -434,14 +434,14 @@ def obter_movimento_manual(tabuleiro, peca):
 
     if eh_pos_mov_str(mov, eh_movimento):
         if eh_movimento:
-            pos_de, pos_para = cria_posicao(mov[0], mov[1]), \
-                cria_posicao(mov[2], mov[3])
+            pos_de = cria_posicao(mov[0], mov[1])
+            pos_para = cria_posicao(mov[2], mov[3])
+            pos_adj = obter_posicoes_adjacentes(pos_de)
             if pecas_iguais(peca, obter_peca(tabuleiro, pos_de)) and \
                 ((deve_passar(tabuleiro, peca) and
                   posicoes_iguais(pos_de, pos_para)) or
                  (peca_para_inteiro(obter_peca(tabuleiro, pos_para)) == 0 and
-                    posicao_em_lista(pos_para,
-                                     obter_posicoes_adjacentes(pos_de)))):
+                    posicao_em_lista(pos_para, pos_adj))):
                 return (pos_de, pos_para)
         else:
             pos = cria_posicao(mov[0], mov[1])
@@ -528,15 +528,14 @@ def obter_movimento_auto(tabuleiro, peca, dificuldade):
     com uma ou duas posicoes, que representam uma posicao ou movimento
     escolhido automaticamente.
     """
-
     eh_movimento = len(obter_posicoes_livres(tabuleiro)) <= 3
     if not eh_movimento:
         criterios = (
-            lambda: crit_vitoria(tabuleiro, peca),
-            lambda: crit_vitoria(tabuleiro, obter_peca_oponente(peca)),
-            lambda: crit_posicoes(tabuleiro, ('b2', )),
-            lambda: crit_posicoes(tabuleiro, ('a1', 'c1', 'a3', 'c3')),
-            lambda: crit_posicoes(tabuleiro, ('b1', 'a2', 'c2', 'b3'))
+            lambda: crit_vitoria(tabuleiro, peca),  # vitoria
+            lambda: crit_vitoria(tabuleiro, obter_peca_oponente(peca)),  # bloq
+            lambda: crit_posicoes(tabuleiro, ('b2', )),  # centro
+            lambda: crit_posicoes(tabuleiro, ('a1', 'c1', 'a3', 'c3')),  # cant
+            lambda: crit_posicoes(tabuleiro, ('b1', 'a2', 'c2', 'b3'))  # late
         )
         for criterio in criterios:
             pos = criterio()
@@ -565,13 +564,11 @@ def moinho(jogador, dificuldade):
             dificuldade not in ('facil', 'normal', 'dificil'):
         raise ValueError('moinho: argumentos invalidos')
 
-    jogador = cria_peca(jogador[1])
-    tabuleiro = cria_tabuleiro()
+    jogador, tabuleiro = cria_peca(jogador[1]), cria_tabuleiro()
     print('Bem-vindo ao JOGO DO MOINHO. Nivel de dificuldade {}.'.format(
         dificuldade))
     print(tabuleiro_para_str(tabuleiro))
-    turno = cria_peca('X')
-    ganhador = cria_peca(' ')
+    turno, ganhador = cria_peca('X'), cria_peca(' ')
     while peca_para_inteiro(ganhador) == 0:
         if pecas_iguais(turno, jogador):  # turno jogador
             mov = obter_movimento_manual(tabuleiro, turno)
@@ -583,7 +580,6 @@ def moinho(jogador, dificuldade):
         else:
             move_peca(tabuleiro, mov[0], mov[1])
         print(tabuleiro_para_str(tabuleiro))
-        turno = obter_peca_oponente(turno)
-        ganhador = obter_ganhador(tabuleiro)
+        turno, ganhador = obter_peca_oponente(turno), obter_ganhador(tabuleiro)
 
     return peca_para_str(ganhador)
