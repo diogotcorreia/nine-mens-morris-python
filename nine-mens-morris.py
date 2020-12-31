@@ -301,14 +301,14 @@ def eh_tabuleiro(arg):
     if jogador1 > 3 or jogador2 > 3 or abs(jogador1 - jogador2) > 1:
         return False
 
-    ganhadores = set()
+    ganhadores = 0
     for seccao in 'abc123':
         vetor = obter_vetor(arg, seccao)
         if pecas_iguais(vetor[0], vetor[1]) and \
                 pecas_iguais(vetor[1], vetor[2]) and \
-                not pecas_iguais(vetor[0], cria_peca(' ')):
-            ganhadores.add(peca_para_inteiro(vetor[0]))
-    return len(ganhadores) <= 1
+                peca_para_inteiro(vetor[0]) != 0:
+            ganhadores += 1
+    return ganhadores <= 1
 
 
 def eh_posicao_livre(tabuleiro, pos):
@@ -354,11 +354,11 @@ def tuplo_para_tabuleiro(t):
     que por si contem 3 tuplos, um para cada posicao.
     """
     todas_pos = obter_todas_posicoes()
-    tab = cria_tabuleiro()
+    tab, int_para_peca_str = cria_tabuleiro(), {-1: 'O', 0: ' ', 1: 'X'}
     for i in range(3):
         for j in range(3):
-            peca = {-1: 'O', 0: ' ', 1: 'X'}[t[i][j]]
-            coloca_peca(tab, cria_peca(peca), todas_pos[i * 3 + j])
+            peca = int_para_peca_str[t[i][j]]
+            tab = coloca_peca(tab, cria_peca(peca), todas_pos[i * 3 + j])
     return tab
 
 
@@ -401,19 +401,6 @@ def obter_posicoes_jogador(tabuleiro, peca):
 ######################
 
 
-def deve_passar(tabuleiro, peca):
-    """
-    deve_passar: tabuleiro X peca -> booleano
-    Devolve True se nao for possivel para o jogador dado movimentar nenhuma
-    das suas pecas. Devolve False em caso contrario.
-    """
-    for pos in obter_posicoes_jogador(tabuleiro, peca):
-        for pos_adj in obter_posicoes_adjacentes(pos):
-            if peca_para_inteiro(obter_peca(tabuleiro, pos_adj)) == 0:
-                return False
-    return True
-
-
 def obter_movimento_manual(tabuleiro, peca):
     """
     obter_movimento_manual: tabuleiro X peca -> tuplo de posicoes
@@ -431,14 +418,14 @@ def obter_movimento_manual(tabuleiro, peca):
             pos_para = cria_posicao(mov[2], mov[3])
             pos_adj = obter_posicoes_adjacentes(pos_de)
             if pecas_iguais(peca, obter_peca(tabuleiro, pos_de)) and \
-                ((deve_passar(tabuleiro, peca) and
+                ((obter_movimento_facil(tabuleiro, peca) == () and
                   posicoes_iguais(pos_de, pos_para)) or
-                 (peca_para_inteiro(obter_peca(tabuleiro, pos_para)) == 0 and
+                 (eh_posicao_livre(tabuleiro, pos_para) and
                     posicao_em_lista(pos_para, pos_adj))):
                 return (pos_de, pos_para)
         else:
             pos = cria_posicao(mov[0], mov[1])
-            if peca_para_inteiro(obter_peca(tabuleiro, pos)) == 0:
+            if eh_posicao_livre(tabuleiro, pos):
                 return (pos, )
 
     raise ValueError("obter_movimento_manual: escolha invalida")
@@ -478,7 +465,7 @@ def obter_movimento_facil(tabuleiro, peca):
     """
     for pos in obter_posicoes_jogador(tabuleiro, peca):
         for pos_adj in obter_posicoes_adjacentes(pos):
-            if pecas_iguais(cria_peca(' '), obter_peca(tabuleiro, pos_adj)):
+            if eh_posicao_livre(tabuleiro, pos_adj):
                 return (pos, pos_adj)
     return ()
 
@@ -491,20 +478,19 @@ def minimax(tabuleiro, jogador, profundidade, seq_movimentos):
     Devolve o melhor resultado (inteiro) e a melhor sequencia de movimentos.
     """
     ganhador = obter_ganhador(tabuleiro)
-    if not pecas_iguais(cria_peca(' '), ganhador) or profundidade == 0:
+    if peca_para_inteiro(ganhador) != 0 or profundidade == 0:
         return peca_para_inteiro(ganhador), seq_movimentos
 
-    melhor_res, melhor_seq_mov = -peca_para_inteiro(jogador), ()
-    posicoes_livres = obter_posicoes_livres(tabuleiro)
+    peca_int = peca_para_inteiro(jogador)
+    melhor_res, melhor_seq_mov = -peca_int, ()
     for pos in obter_posicoes_jogador(tabuleiro, jogador):
         for pos_adj in obter_posicoes_adjacentes(pos):
-            if posicao_em_lista(pos_adj, posicoes_livres):
+            if eh_posicao_livre(tabuleiro, pos_adj):
                 copia_tabuleiro = cria_copia_tabuleiro(tabuleiro)
-                move_peca(copia_tabuleiro, pos, pos_adj)
+                copia_tabuleiro = move_peca(copia_tabuleiro, pos, pos_adj)
                 novo_res, nova_seq_mov = \
                     minimax(copia_tabuleiro, obter_peca_oponente(jogador),
                             profundidade - 1, seq_movimentos + (pos, pos_adj))
-                peca_int = peca_para_inteiro(jogador)
                 if melhor_seq_mov == () or \
                     (peca_int == 1 and novo_res > melhor_res) or \
                         (peca_int == -1 and novo_res < melhor_res):
@@ -567,9 +553,9 @@ def moinho(jogador, dificuldade):
             print('Turno do computador ({}):'.format(dificuldade))
             mov = obter_movimento_auto(tabuleiro, turno, dificuldade)
         if len(mov) == 1:
-            coloca_peca(tabuleiro, turno, mov[0])
+            tabuleiro = coloca_peca(tabuleiro, turno, mov[0])
         else:
-            move_peca(tabuleiro, mov[0], mov[1])
+            tabuleiro = move_peca(tabuleiro, mov[0], mov[1])
         print(tabuleiro_para_str(tabuleiro))
         turno, ganhador = obter_peca_oponente(turno), obter_ganhador(tabuleiro)
 
