@@ -4,18 +4,27 @@
 # TAD Posicao #
 ###############
 
-def cria_posicao(c, l):
+# Representacao: R[coluna, linha] = {'c': coluna, 'l': linha}
+# cria_posicao: str X str -> posicao
+# cria_copia_posicao: posicao -> posicao
+# obter_pos_c: posicao -> str
+# obter_pos_l: posicao -> str
+# eh_posicao: universal -> booleano
+# posicoes_iguais: posicao X posicao -> booleano
+# posicao_para_str: posicao -> str
+
+def cria_posicao(coluna, linha):
     """
     cria_posicao: str X str -> posicao
     Recebe uma coluna e linha de uma posicao e devolve um
     dicionario que corresponde ah representacao interna da posicao.
-    R[c, l] = {'c': c, 'l': l}
+    R[coluna, linha] = {'c': coluna, 'l': linha}
     """
-    if type(c) != str or type(l) != str or \
-            len(c) != 1 or c not in 'abc' or \
-            len(l) != 1 or l not in '123':
+    if type(coluna) != str or type(linha) != str or \
+            len(coluna) != 1 or coluna not in 'abc' or \
+            len(linha) != 1 or linha not in '123':
         raise ValueError("cria_posicao: argumentos invalidos")
-    return {'c': c, 'l': l}
+    return {'c': coluna, 'l': linha}
 
 
 def cria_copia_posicao(pos):
@@ -143,6 +152,13 @@ def obter_todas_posicoes():
 # TAD Peca #
 ############
 
+# Representacao: R[peca] -> {'peca': peca}
+# cria_peca: str -> peca
+# cria_copia_peca: peca -> peca
+# eh_peca: universal -> booleano
+# pecas_iguais: peca X peca -> booleano
+# peca_para_str: peca -> str
+
 
 def cria_peca(peca):
     """
@@ -215,12 +231,26 @@ def obter_peca_oponente(peca):
 # TAD Tabuleiro #
 #################
 
+# Representacao: R[posicao: peca] = {posicao1_str: peca, ...}
+# cria_tabuleiro: {} -> tabuleiro
+# cria_copia_tabuleiro: tabuleiro -> tabuleiro
+# obter_peca: tabuleiro X posicao -> peca
+# obter_vetor: tabuleiro X str -> tuplo de pecas
+# coloca_peca: tabuleiro X peca X posicao -> tabuleiro
+# remove_peca: tabuleiro X posicao -> tabuleiro
+# move_peca: tabuleiro X posicao X posicao -> tabuleiro
+# eh_tabuleiro: universal -> booleano
+# eh_posicao_livre: tabuleiro X posicao -> booleano
+# tabuleiros_iguais: tabuleiro X tabuleiro -> booleano
+# tabuleiro_para_str: tabuleiro -> str
+# tuplo_para_tabuleiro: tuplo -> tabuleiro
+
 
 def cria_tabuleiro():
     """
     cria_tabuleiro: {} -> tabuleiro
     Devolve um tabuleiro de jogo do moinho de 3x3 posicoes vazio
-    R[posicao: peca] = {posicao_str: peca}
+    R[posicao: peca] = {posicao1_str: peca, ...}
     """
     return {}
 
